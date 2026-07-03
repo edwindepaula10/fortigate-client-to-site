@@ -1,0 +1,68 @@
+config system interface
+    edit port2
+        set mode dhcp
+        set allowaccess ping https ssh
+    next
+    edit port1
+        set mode static
+        set ip 10.24.15.1 255.255.255.0
+        set allowaccess ping https ssh
+    next
+end
+
+config user local
+    edit "Edwin"
+        set type password
+        set passwd Edwin2024
+    next
+end
+
+config user group
+    edit "SSL-VPN-Users"
+        set member "Edwin"
+    next
+end
+
+config vpn ssl web portal
+    edit "full-access"
+        set tunnel-mode enable
+        set web-mode enable
+        set ip-pools "SSLVPN_TUNNEL_ADDR1"
+        set allow-user-access web ftp smb sftp telnet ssh vnc rdp ping citrix portforward
+    next
+end
+
+config vpn ssl settings
+    set servercert "self-sign"
+    set tunnel-ip-pools "SSLVPN_TUNNEL_ADDR1"
+    set source-interface "port2"
+    set source-address "all"
+    set default-portal "full-access"
+    set port 443
+    set ssl-min-proto-ver tls1-0
+    set ssl-max-proto-ver tls1-2
+    set login-attempt-limit 10
+    set login-block-time 10
+    config authentication-rule
+        edit 1
+            set groups "SSL-VPN-Users"
+            set portal "full-access"
+            set source-interface "port2"
+            set source-address "all"
+        next
+    end
+end
+
+config firewall policy
+    edit 1
+        set name "SSL-VPN-to-LAN"
+        set srcintf "ssl.root"
+        set dstintf "port1"
+        set srcaddr "all"
+        set dstaddr "all"
+        set action accept
+        set schedule "always"
+        set service "ALL"
+        set users "Edwin"
+    next
+end
